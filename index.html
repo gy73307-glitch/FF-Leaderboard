@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Free Fire Tournament Leaderboard</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Library for Image generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --glow-blue: #0ff;
+            --glow-pink: #f0f;
+            --glow-red: #f00;
+            --gold-color: #ffd700;
+            --silver-color: #c0c0c0;
+            --bronze-color: #cd7f32;
+        }
+        body {
+            background: url('https://i.imgur.com/siyf9kb.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 15px;
+            font-family: 'Rajdhani', sans-serif;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        .main-container {
+            width: 95%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .leaderboard-container, .controls-container {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 30px var(--glow-pink), 0 0 40px var(--glow-red);
+        }
+        .leaderboard-title {
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.8em;
+            margin: 0 0 25px 0;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #fff;
+            text-shadow: 0 0 5px #fff, 0 0 15px var(--glow-blue), 0 0 25px var(--glow-pink), 0 0 40px var(--glow-red);
+        }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; font-size: 1.2em; font-weight: 700; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        thead th { font-family: 'Orbitron', sans-serif; font-size: 1.1em; text-transform: uppercase; letter-spacing: 2px; border-bottom: 3px solid rgba(0, 255, 255, 0.7); color: var(--glow-blue); }
+        
+        .gold { background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), transparent); border-left: 5px solid var(--gold-color); }
+        .gold td { color: var(--gold-color); }
+        .silver { background: linear-gradient(90deg, rgba(192, 192, 192, 0.15), transparent); border-left: 5px solid var(--silver-color); }
+        .silver td { color: var(--silver-color); }
+        .bronze { background: linear-gradient(90deg, rgba(205, 127, 50, 0.15), transparent); border-left: 5px solid var(--bronze-color); }
+        .bronze td { color: var(--bronze-color); }
+        
+        .gold td:first-child, .silver td:first-child, .bronze td:first-child { font-size: 1.5em; font-weight: bold; }
+        
+        .fa-skull-crossbones { color: #ff4d4d; }
+        .fa-trophy { color: var(--gold-color); }
+        
+        .controls-container h2 { font-family: 'Orbitron', sans-serif; text-align: center; color: var(--glow-blue); margin-top: 0; text-transform: uppercase; }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px; }
+        .form-inputs { display: grid; grid-template-columns: 0.6fr 1.5fr 1fr 1fr; gap: 15px; }
+        .form-grid input {
+            background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px; padding: 12px; font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1em; color: #fff; transition: all 0.3s ease;
+        }
+        .form-grid input:focus { outline: none; border-color: var(--glow-blue); box-shadow: 0 0 10px var(--glow-blue); }
+        #leaderboardTitleInput { font-weight: bold; text-align: center; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+
+        .action-buttons { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .btn {
+            padding: 12px 20px; font-family: 'Orbitron', sans-serif; font-size: 1em; font-weight: 700;
+            color: #fff; border-radius: 8px; cursor: pointer; text-transform: uppercase; transition: all 0.3s ease;
+            text-align: center; border: 2px solid;
+        }
+
+        .btn-add { background: rgba(0, 255, 255, 0.2); border-color: var(--glow-blue); box-shadow: 0 0 10px var(--glow-blue); }
+        .btn-add:hover { background: var(--glow-blue); color: #000; }
+        .btn-img { background: rgba(0, 150, 255, 0.2); border-color: #0096FF; box-shadow: 0 0 10px #0096FF; }
+        .btn-img:hover { background: #0096FF; }
+        .btn-clear { background: rgba(255, 0, 0, 0.2); border-color: var(--glow-red); box-shadow: 0 0 10px var(--glow-red); }
+        .btn-clear:hover { background: var(--glow-red); }
+
+        .delete-btn { background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 1.2em; transition: all 0.3s ease; }
+        .delete-btn:hover { color: #fff; transform: scale(1.2); text-shadow: 0 0 8px #ff4d4d; }
+
+        @media (max-width: 768px) {
+            .leaderboard-title { font-size: 2em; }
+            th, td { font-size: 1em; padding: 10px; }
+            .form-inputs { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <!-- Leaderboard Display -->
+        <div class="leaderboard-container" id="leaderboard-to-capture">
+            <h1 class="leaderboard-title" id="leaderboardTitle">Free Fire Tournament</h1>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player Name</th>
+                            <th>Kills <i class="fa-solid fa-skull-crossbones"></i></th>
+                            <th>Prize <i class="fa-solid fa-trophy"></i></th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Controls for adding/clearing players -->
+        <div class="controls-container">
+            <h2>Leaderboard Controls</h2>
+            <div class="form-grid">
+                <input type="text" id="leaderboardTitleInput" placeholder="Enter Leaderboard Title">
+                <div class="form-inputs">
+                    <input type="number" id="playerRank" placeholder="Rank">
+                    <input type="text" id="playerName" placeholder="Player Name">
+                    <input type="number" id="playerKills" placeholder="Kills" min="0">
+                    <input type="text" id="playerPrize" placeholder="Prize">
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-add" id="addPlayerBtn">Add Player</button>
+                <button class="btn btn-img" id="downloadImgBtn">Download Image</button>
+                <button class="btn btn-clear" id="clearBoardBtn">Clear All</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let players = [];
+
+        // Renders the leaderboard table from the 'players' array
+        function renderLeaderboard() {
+            const leaderboardBody = document.getElementById('leaderboard-body');
+            leaderboardBody.innerHTML = ''; 
+
+            players.forEach((player) => {
+                let rankClass = '';
+                if (player.rank == 1) rankClass = 'gold';
+                else if (player.rank == 2) rankClass = 'silver';
+                else if (player.rank == 3) rankClass = 'bronze';
+
+                const row = document.createElement('tr');
+                row.className = rankClass;
+                row.innerHTML = `
+                    <td>${player.rank}</td>
+                    <td>${player.name}</td>
+                    <td>${player.kills}</td>
+                    <td>${player.prize}</td>
+                    <td><button class="delete-btn" data-id="${player.id}"><i class="fas fa-trash-alt"></i></button></td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+        }
+
+        // Add player with manually entered data
+        function addPlayer() {
+            const rankInput = document.getElementById('playerRank');
+            const nameInput = document.getElementById('playerName');
+            const killsInput = document.getElementById('playerKills');
+            const prizeInput = document.getElementById('playerPrize');
+            
+            const rank = rankInput.value.trim() || '-';
+            const name = nameInput.value.trim();
+            const kills = parseInt(killsInput.value);
+            const prize = prizeInput.value.trim() || '-';
+
+            if (name && !isNaN(kills) && kills >= 0) {
+                players.push({ id: `player_${Date.now()}`, rank, name, kills, prize });
+                rankInput.value = '';
+                nameInput.value = '';
+                killsInput.value = '';
+                prizeInput.value = '';
+                saveAndRender();
+            } else {
+                alert('Please enter a valid name and a non-negative number of kills.');
+            }
+        }
+        
+        function deletePlayer(playerId) {
+            const playerIndex = players.findIndex(p => p.id === playerId);
+            if (playerIndex > -1) {
+                if (confirm(`Are you sure you want to delete ${players[playerIndex].name}?`)) {
+                    players.splice(playerIndex, 1);
+                    saveAndRender();
+                }
+            }
+        }
+
+        function clearLeaderboard() {
+            if (confirm('Are you sure you want to clear the entire leaderboard? This cannot be undone.')) {
+                players = [];
+                saveAndRender();
+            }
+        }
+        
+        // Downloads the leaderboard as a PNG image
+        function downloadImage() {
+             const leaderboardElement = document.getElementById('leaderboard-to-capture');
+             html2canvas(leaderboardElement, { scale: 2.5, useCORS: true, backgroundColor: null })
+                .then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'FreeFire_Leaderboard.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+        }
+
+        function updateTitle(newTitle) {
+            document.getElementById('leaderboardTitle').textContent = newTitle;
+            localStorage.setItem('freeFireLeaderboardTitle', newTitle);
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('freeFireLeaderboard', JSON.stringify(players));
+            renderLeaderboard();
+        }
+
+        function loadData() {
+            // Load Title
+            const savedTitle = localStorage.getItem('freeFireLeaderboardTitle') || 'Free Fire Tournament';
+            document.getElementById('leaderboardTitle').textContent = savedTitle;
+            document.getElementById('leaderboardTitleInput').value = savedTitle;
+            
+            // Load Players
+            const savedPlayers = localStorage.getItem('freeFireLeaderboard');
+            players = savedPlayers ? JSON.parse(savedPlayers) : [
+                { id: 'player_1', rank: 1, name: 'KillerX', kills: 15, prize: '$500' },
+                { id: 'player_2', rank: 2, name: 'ShadowStriker', kills: 12, prize: '$300' },
+                { id: 'player_3', rank: 3, name: 'Viper', kills: 10, prize: '$200' }
+            ];
+            renderLeaderboard();
+        }
+
+        // EVENT LISTENERS
+        document.getElementById('addPlayerBtn').addEventListener('click', addPlayer);
+        document.getElementById('downloadImgBtn').addEventListener('click', downloadImage);
+        document.getElementById('clearBoardBtn').addEventListener('click', clearLeaderboard);
+        
+        document.getElementById('leaderboardTitleInput').addEventListener('input', (e) => updateTitle(e.target.value));
+
+        document.getElementById('leaderboard-body').addEventListener('click', function(event) {
+            const deleteButton = event.target.closest('.delete-btn');
+            if (deleteButton) {
+                deletePlayer(deleteButton.getAttribute('data-id'));
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+
+</body>
+</html>
